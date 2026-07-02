@@ -1,0 +1,92 @@
+# Configuration for the nightly research digest.
+# Edit this file to tune what papers get pulled and how they are ranked.
+
+# arXiv categories to scan each night.
+# Full list: https://arxiv.org/category_taxonomy
+categories:
+  - cs.AI   # Artificial Intelligence
+  - cs.CL   # Computation and Language (LLMs / NLP)
+  - cs.LG   # Machine Learning
+  - cs.MA   # Multi-Agent Systems
+  - cs.IR   # Information Retrieval (RAG)
+
+# How many days back to consider "fresh" (arXiv announces on weekdays).
+lookback_days: 2
+
+# Maximum number of papers to fully summarize in a digest.
+max_papers: 8
+
+# Candidate papers pulled from arXiv before ranking (keep modest to be polite to the API).
+max_candidates: 120
+
+# Topics you care about. Matches in title/abstract boost a paper's score.
+# Each key is a label; the list are keywords/phrases (case-insensitive substring match).
+topics:
+  ai_agents:
+    - ai agent
+    - agentic
+    - autonomous agent
+    - tool use
+    - tool-use
+    - react agent
+    - planning
+  large_language_models:
+    - large language model
+    - llm
+    - gpt
+    - transformer
+    - instruction tuning
+    - fine-tuning
+    - fine tuning
+    - prompt
+  multi_agent_systems:
+    - multi-agent
+    - multi agent
+    - agent collaboration
+    - role-playing
+    - orchestration
+  ai_automation:
+    - automation
+    - workflow
+    - pipeline
+    - rpa
+    - self-improving
+  generative_ai:
+    - generative
+    - diffusion
+    - text-to-
+    - retrieval-augmented
+    - rag
+  data_science:
+    - data science
+    - data analysis
+    - tabular
+    - forecasting
+    - feature engineering
+    - time series
+
+# Professional roles you are optimizing for. Used to frame the "why this matters" section.
+roles:
+  - Data Analyst
+  - Data Scientist
+  - AI Engineer
+  - LLM Engineer
+  - Generative AI Engineer
+
+# LLM provider settings. The provider is auto-detected from whichever API key is set
+# in the environment (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, HF_TOKEN).
+# If no key is present, an offline extractive summarizer is used as a fallback.
+#
+# Hugging Face uses the OpenAI-compatible Inference Providers router
+# (https://router.huggingface.co/v1). Set `provider: huggingface` and pick any
+# chat model in `model`, e.g. "meta-llama/Llama-3.3-70B-Instruct",
+# "Qwen/Qwen2.5-7B-Instruct", or "openai/gpt-oss-120b". Append ":provider" to pin
+# a backend (e.g. ":groq", ":together") or ":cheapest" / ":fastest".
+llm:
+  provider: auto          # auto | openai | anthropic | gemini | huggingface | none
+  model: ""               # leave empty to use a sensible default per provider
+  temperature: 0.2
+  max_output_tokens: 1200
+
+# Where to write digests.
+output_dir: digests

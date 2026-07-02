@@ -52,9 +52,30 @@ The summarizer auto-detects a provider from the environment. Set one of:
 | `OPENAI_API_KEY` | OpenAI | `gpt-4o-mini` |
 | `ANTHROPIC_API_KEY` | Anthropic | `claude-3-5-haiku-latest` |
 | `GEMINI_API_KEY` | Google Gemini | `gemini-1.5-flash` |
+| `HF_TOKEN` | Hugging Face (Inference Providers) | `meta-llama/Llama-3.1-8B-Instruct` |
 
 If **no key** is set, an offline extractive summary is produced instead, so the pipeline
 still works (just without the AI-written analysis).
+
+### Using a Hugging Face token
+
+Hugging Face is served through the OpenAI-compatible
+[Inference Providers router](https://huggingface.co/docs/inference-providers) — one
+`HF_TOKEN` gives access to many open models (Llama, Qwen, DeepSeek, gpt-oss, …).
+
+1. Create a token at <https://huggingface.co/settings/tokens> with the
+   **"Make calls to Inference Providers"** permission.
+2. Export it (any of `HF_TOKEN`, `HUGGINGFACE_API_KEY`, `HUGGINGFACEHUB_API_TOKEN`):
+   ```bash
+   export HF_TOKEN=hf_xxx
+   ```
+3. Pick a model in `config.yaml`, e.g.:
+   ```yaml
+   llm:
+     provider: huggingface
+     model: "meta-llama/Llama-3.3-70B-Instruct"   # or Qwen/Qwen2.5-7B-Instruct, etc.
+   ```
+   Append `:groq` / `:together` / `:fastest` / `:cheapest` to the model to steer routing.
 
 ## Run it automatically every night
 

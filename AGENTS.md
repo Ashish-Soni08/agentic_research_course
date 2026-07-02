@@ -23,9 +23,13 @@ This repo contains two things:
 - **arXiv requires HTTPS** (`https://export.arxiv.org/...`); the plain-HTTP endpoint
   returns an empty body on this VM. `sources/arxiv.py` already uses HTTPS.
 - The LLM step **auto-detects** a provider from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` /
-  `GEMINI_API_KEY`. With **no key set it silently falls back** to an offline extractive
-  summary, so a run "succeeding" does not prove the LLM path ran — check the
+  `GEMINI_API_KEY` / `HF_TOKEN`. With **no key set it silently falls back** to an offline
+  extractive summary, so a run "succeeding" does not prove the LLM path ran — check the
   `LLM provider:` line in the run log (it prints `none` when no key is configured).
+- **Hugging Face** uses the OpenAI-compatible router `https://router.huggingface.co/v1`
+  (`_call_huggingface`), auth via `HF_TOKEN`. Pick a chat model in `config.yaml`
+  (`provider: huggingface`, `model: ...`); the token needs the "Make calls to Inference
+  Providers" permission.
 - Code discovery calls GitHub + Papers with Code; use `--no-code` to skip network calls
   to those services. A `GITHUB_TOKEN` (if present) raises GitHub API rate limits.
 - The scheduled automation lives in `.github/workflows/nightly-digest.yml`; the LLM key

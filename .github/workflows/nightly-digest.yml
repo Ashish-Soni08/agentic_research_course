@@ -32,6 +32,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
           # Provided automatically; raises GitHub API rate limits for code discovery.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: research-digest run

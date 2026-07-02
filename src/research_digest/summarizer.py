@@ -4,6 +4,7 @@ An LLM provider is auto-detected from the environment:
 - OPENAI_API_KEY    -> OpenAI chat completions
 - ANTHROPIC_API_KEY -> Anthropic messages
 - GEMINI_API_KEY    -> Google Gemini generateContent
+- HF_TOKEN          -> Hugging Face Inference Providers (OpenAI-compatible router)
 
 If no key is available, an offline extractive summary is produced instead so the
 pipeline always yields a useful digest and stays testable without credentials.
@@ -23,7 +24,23 @@ DEFAULT_MODELS = {
     "openai": "gpt-4o-mini",
     "anthropic": "claude-3-5-haiku-latest",
     "gemini": "gemini-1.5-flash",
+    "huggingface": "meta-llama/Llama-3.1-8B-Instruct",
 }
+
+# Hugging Face access token can be provided under any of these names.
+HF_TOKEN_VARS = (
+    "HF_TOKEN",
+    "HUGGINGFACE_API_KEY",
+    "HUGGINGFACEHUB_API_TOKEN",
+    "HUGGINGFACE_HUB_TOKEN",
+)
+
+
+def _hf_token() -> str | None:
+    for var in HF_TOKEN_VARS:
+        if os.environ.get(var):
+            return os.environ[var]
+    return None
 
 
 def detect_provider(cfg: LLMConfig) -> str:
@@ -35,6 +52,8 @@ def detect_provider(cfg: LLMConfig) -> str:
         return "anthropic"
     if os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"):
         return "gemini"
+    if _hf_token():
+        return "huggingface"
     return "none"
 
 
@@ -88,6 +107,23 @@ def _call_openai(prompt: str, cfg: LLMConfig, model: str) -> str:
     resp = requests.post(
         "https://api.openai.com/v1/chat/completions",
         headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
+        json={
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": cfg.temperature,
+            "max_tokens": cfg.max_output_tokens,
+        },
+        timeout=120,
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
+
+
+def _call_huggingface(prompt: str, cfg: LLMConfig, model: str) -> str:
+    # The HF router is OpenAI-compatible, so the payload mirrors _call_openai.
+    resp = requests.post(
+        "https://router.huggingface.co/v1/chat/completions",
+        headers={"Authorization": f"Bearer {_hf_token()}"},
         json={
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
@@ -186,6 +222,8 @@ def summarize(paper: Paper, roles: list[str], cfg: LLMConfig) -> str:
     try:
         if provider == "openai":
             return _call_openai(prompt, cfg, model)
+        if provider == "huggingface":
+            return _call_huggingface(prompt, cfg, model)
         if provider == "anthropic":
             return _call_anthropic(prompt, cfg, model)
         if provider == "gemini":

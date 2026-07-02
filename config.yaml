@@ -74,10 +74,16 @@ roles:
   - Generative AI Engineer
 
 # LLM provider settings. The provider is auto-detected from whichever API key is set
-# in the environment (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY).
+# in the environment (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, HF_TOKEN).
 # If no key is present, an offline extractive summarizer is used as a fallback.
+#
+# Hugging Face uses the OpenAI-compatible Inference Providers router
+# (https://router.huggingface.co/v1). Set `provider: huggingface` and pick any
+# chat model in `model`, e.g. "meta-llama/Llama-3.3-70B-Instruct",
+# "Qwen/Qwen2.5-7B-Instruct", or "openai/gpt-oss-120b". Append ":provider" to pin
+# a backend (e.g. ":groq", ":together") or ":cheapest" / ":fastest".
 llm:
-  provider: auto          # auto | openai | anthropic | gemini | none
+  provider: auto          # auto | openai | anthropic | gemini | huggingface | none
   model: ""               # leave empty to use a sensible default per provider
   temperature: 0.2
   max_output_tokens: 1200

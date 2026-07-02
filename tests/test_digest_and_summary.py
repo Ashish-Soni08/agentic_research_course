@@ -82,6 +82,54 @@ def test_openai_path_builds_request_and_parses(monkeypatch):
     assert "github.com/acme/agent-fw" in captured["prompt"]
 
 
+def test_detect_provider_huggingface(monkeypatch):
+    for var in ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]:
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("HF_TOKEN", "hf_test")
+    assert summarizer.detect_provider(LLMConfig(provider="auto")) == "huggingface"
+
+
+def test_huggingface_path_builds_request_and_parses(monkeypatch):
+    for var in ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]:
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("HUGGINGFACEHUB_API_TOKEN", "hf_test")  # alternate var name
+
+    captured = {}
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        captured["url"] = url
+        captured["auth"] = headers["Authorization"]
+        captured["model"] = json["model"]
+        return _FakeLLMResp(
+            {"choices": [{"message": {"content": "### TL;DR\nHF walkthrough."}}]}
+        )
+
+    monkeypatch.setattr(summarizer.requests, "post", fake_post)
+    out = summarizer.summarize(_paper(), ["AI Engineer"], LLMConfig(provider="auto"))
+
+    assert out == "### TL;DR\nHF walkthrough."
+    assert "router.huggingface.co/v1/chat/completions" in captured["url"]
+    assert captured["auth"] == "Bearer hf_test"
+    assert captured["model"] == "meta-llama/Llama-3.1-8B-Instruct"
+
+
+def test_huggingface_respects_config_model(monkeypatch):
+    for var in ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]:
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("HF_TOKEN", "hf_test")
+
+    captured = {}
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        captured["model"] = json["model"]
+        return _FakeLLMResp({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(summarizer.requests, "post", fake_post)
+    cfg = LLMConfig(provider="huggingface", model="Qwen/Qwen2.5-7B-Instruct")
+    summarizer.summarize(_paper(), ["AI Engineer"], cfg)
+    assert captured["model"] == "Qwen/Qwen2.5-7B-Instruct"
+
+
 def test_llm_failure_falls_back_to_offline(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
 
